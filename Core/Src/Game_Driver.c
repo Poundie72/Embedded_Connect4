@@ -12,6 +12,7 @@ static uint8_t PLAYER1_WINS = 0;
 static uint8_t PLAYER2_WINS = 0;
 static uint32_t startTime = 0;
 static uint32_t endTime = 0;
+static bool tieGame = false;
 
 static uint8_t currentPlayer = PLAYER1;
 
@@ -29,6 +30,7 @@ void resetGame(){
 	board[6][0] = PLAYERNULL;
 	startTime = 0;
 	endTime = 0;
+	tieGame = false;
 }
 
 void screen1(){
@@ -129,11 +131,11 @@ void screen2(){
 }
 
 void screen3(){
-	char buffer[3];
+	char buffer[11];
 
 	uint32_t totalTimeinTicks = endTime - startTime;
 	uint32_t totalTimeinSeconds = totalTimeinTicks / 1000;
-
+	LCD_Clear(0, LCD_COLOR_BLACK);
 
 	if(winner == PLAYER1){
 		PLAYER1_WINS++;
@@ -146,6 +148,7 @@ void screen3(){
 
 	if(winner == PLAYER1) LCD_Display_String(20,100, "PLAYER 1 WINS!");
 	if(winner == PLAYER2) LCD_Display_String(20,100, "PLAYER 2 WINS!");
+	if(tieGame) LCD_Display_String(20,100, "TIE GAME!");
 
 	HAL_Delay(1000);
 
@@ -161,7 +164,7 @@ void screen3(){
 	LCD_Display_String(30, 260, "Match Length");
 	LCD_Display_String(70, 290, "SECONDS");
 
-	sprintf(buffer, "%d", totalTimeinSeconds);
+	sprintf(buffer, "%lu", totalTimeinSeconds);
 	LCD_Display_String(30, 290, buffer);
 
 
@@ -270,6 +273,13 @@ void dropCoin() {
 				
                 return;
             }
+
+			bool tieGame = isBoardFull();
+			if(tieGame == true){
+				gameInProgress = false;
+				tieGame = true;
+				return;
+			}
 
             // Update state of game
             if (currentPlayer == PLAYER1) currentPlayer = PLAYER2;
@@ -441,5 +451,16 @@ uint8_t findLowestEmptyRow(int col) {
 		}
 	}
 	return -1; // No empty row found
+}
+
+bool isBoardFull() {
+    for (int col = 0; col < NUM_COLS; col++) {
+        for (int row = 0; row < NUM_ROWS; row++) {
+            if (board[col][row] == PLAYERNULL) {
+                return false; // Found an empty slot
+            }
+        }
+    }
+    return true; // No empty slots found
 }
 
